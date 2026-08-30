@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::db_types::DataType;
+use crate::{db_error::DbError, db_types::DataType};
 
 #[derive(Debug)]
 pub struct DataBase {
@@ -14,7 +14,7 @@ pub struct DataBase {
 }
 
 impl DataBase {
-    pub fn new<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, DbError> {
         let mut file = File::options().read(true).create(true).open(&path)?;
         let data = Self::read_file_to_hashmap(&mut file)?;
         Ok(Self {
@@ -27,7 +27,7 @@ impl DataBase {
         self.data.get(key)
     }
 
-    pub fn set<T: Into<DataType>>(&mut self, key: &str, value: T) -> io::Result<()> {
+    pub fn set<T: Into<DataType>>(&mut self, key: &str, value: T) -> Result<(), DbError> {
         let value = value.into();
         let new_line = format!("{}: {}\n", key, value.to_str().into_owned());
         let mut updated_file = File::options().append(true).open(&self.path)?;
@@ -37,14 +37,14 @@ impl DataBase {
         Ok(())
     }
 
-    pub fn remove(&mut self, key: &str) -> io::Result<Option<DataType>> {
+    pub fn remove(&mut self, key: &str) -> Result<Option<DataType>, DbError> {
         let new_line = format!("{}: __DELETED__\n", key);
         let mut updated_file = File::options().append(true).open(&self.path)?;
         updated_file.write_all(new_line.as_bytes())?;
         Ok(self.data.remove(key))
     }
 
-    pub fn compact(&self) -> io::Result<()> {
+    pub fn compact(&self) -> Result<(), DbError> {
         let mut file = File::options()
             .write(true)
             .truncate(true)
@@ -58,7 +58,7 @@ impl DataBase {
         Ok(())
     }
 
-    fn read_file_to_hashmap(file: &mut File) -> io::Result<HashMap<String, DataType>> {
+    fn read_file_to_hashmap(file: &mut File) -> Result<HashMap<String, DataType>, DbError> {
         file.seek(io::SeekFrom::Start(0))?;
         let lines = io::BufReader::new(file).lines();
         let mut data: HashMap<String, DataType> = HashMap::new();
