@@ -1,0 +1,43 @@
+use std::env;
+
+use my_db::DataBase;
+
+#[test]
+fn test_db_insert_and_read() {
+    let mut path = env::temp_dir();
+    path.push("test_insert.db");
+    let _ = std::fs::remove_file(&path);
+
+    let mut db = DataBase::new(&path).unwrap();
+
+    db.set("username", "Alice").unwrap();
+    db.set("password", "password123").unwrap();
+    db.set("score", 10).unwrap();
+    db.set("ratio", 3.5).unwrap();
+
+    assert_eq!(db.get("username").unwrap().to_str(), "Alice");
+    assert_eq!(db.get("score").unwrap().to_str(), "10");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+#[test]
+fn test_database_persistence() {
+    let mut path = env::temp_dir();
+    path.push("test_persistence.db");
+    let _ = std::fs::remove_file(&path);
+
+    {
+        let mut db = DataBase::new(&path).unwrap();
+        db.set("persisted_key", "hello world").unwrap();
+    }
+
+    let db_reloaded = DataBase::new(&path).unwrap();
+
+    assert_eq!(
+        db_reloaded.get("persisted_key").unwrap().to_str(),
+        "hello world"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
