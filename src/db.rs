@@ -15,12 +15,8 @@ pub struct DataBase {
 
 impl DataBase {
     pub fn new<P: AsRef<Path>>(path: P) -> io::Result<Self> {
-        let mut file = File::options()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)?;
-        let data = read_file_to_hashmap(&mut file)?;
+        let mut file = File::options().read(true).create(true).open(&path)?;
+        let data = Self::read_file_to_hashmap(&mut file)?;
         Ok(Self {
             path: path.as_ref().to_path_buf(),
             data: data,
@@ -47,25 +43,39 @@ impl DataBase {
         updated_file.write_all(new_line.as_bytes())?;
         Ok(self.data.remove(key))
     }
-}
 
-fn read_file_to_hashmap(file: &mut File) -> io::Result<HashMap<String, DataType>> {
-    file.seek(io::SeekFrom::Start(0))?;
-    let lines = io::BufReader::new(file).lines();
-    let mut data: HashMap<String, DataType> = HashMap::new();
+    pub fn compact(&self) -> io::Result<()> {
+        let mut file = File::options()
+            .write(true)
+            .truncate(true)
+            .open(&self.path)?;
 
-    for line in lines {
-        let line = line?;
-        if let Some((k, v)) = line.split_once(": ") {
-            if v == "__DELETED__" {
-                data.remove(&k.to_owned());
-            } else {
-                let key = k.to_owned();
-                let value = v.parse::<DataType>().unwrap();
-                data.insert(key, value);
-            }
+        for (k, v) in self.data.iter() {
+            let line = format!("{}: {}\n", k, v.to_str());
+            file.write_all(line.as_bytes())?;
         }
+
+        Ok(())
     }
 
-    Ok(data)
+    fn read_file_to_hashmap(file: &mut File) -> io::Result<HashMap<String, DataType>> {
+        file.seek(io::SeekFrom::Start(0))?;
+        let lines = io::BufReader::new(file).lines();
+        let mut data: HashMap<String, DataType> = HashMap::new();
+
+        for line in lines {
+            let line = line?;
+            if let Some((k, v)) = line.split_once(": ") {
+                if v == "__DELETED__" {
+                    data.remove(&k.to_owned());
+                } else {
+                    let key = k.to_owned();
+                    let value = v.parse::<DataType>().unwrap();
+                    data.insert(key, value);
+                }
+            }
+        }
+
+        Ok(data)
+    }
 }
