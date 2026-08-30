@@ -8,12 +8,12 @@ use std::{
 use crate::{db_error::DbError, db_types::DataType};
 
 #[derive(Debug)]
-pub struct DataBase {
+pub struct Database {
     path: PathBuf,
     data: HashMap<String, DataType>,
 }
 
-impl DataBase {
+impl Database {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, DbError> {
         let mut file = File::options()
             .read(true)

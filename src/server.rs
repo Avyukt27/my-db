@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use my_db::db::DataBase;
+use my_db::db::Database;
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream, ToSocketAddrs},
@@ -11,7 +11,7 @@ use tokio::{
 
 pub struct Server {
     listener: TcpListener,
-    db: Arc<Mutex<DataBase>>,
+    db: Arc<Mutex<Database>>,
 }
 
 impl Server {
@@ -20,7 +20,7 @@ impl Server {
         path: P,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let listener = TcpListener::bind(addr).await?;
-        let db = DataBase::new(path)?;
+        let db = Database::new(path)?;
 
         Ok(Self {
             listener,
@@ -37,35 +37,42 @@ impl Server {
 
             tokio::spawn(async move {
                 println!("New client connected!");
-                Self::handle_client(socket)
+                handle_client(socket, db)
                     .await
                     .unwrap_or_else(|e| eprintln!("Error handling client: {}", e));
             });
         }
     }
+}
 
-    async fn handle_client(socket: TcpStream) -> Result<(), Box<dyn std::error::Error>> {
-        let (reader, mut writer) = socket.into_split();
-        let mut reader = BufReader::new(reader);
-        let mut line = String::new();
+async fn handle_client(
+    socket: TcpStream,
+    db: Arc<Mutex<Database>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let (reader, mut writer) = socket.into_split();
+    let mut reader = BufReader::new(reader);
+    let mut line = String::new();
 
-        loop {
-            line.clear();
-            let bytes_read = reader.read_line(&mut line).await?;
-            if bytes_read == 0 {
-                println!("Client disconnected");
-                break;
-            }
-
-            let trimmed = line.trim();
-            if trimmed.is_empty() {
-                continue;
-            }
-
-            println!("Received: {}", trimmed);
-            writer.write_all(b"OK\n").await?;
+    loop {
+        line.clear();
+        let bytes_read = reader.read_line(&mut line).await?;
+        if bytes_read == 0 {
+            println!("Client disconnected");
+            break;
         }
 
-        Ok(())
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        let db_clone = Arc::clone(&db);
+        let response = tokio::task::spawn_blocking(move || {
+            let mut guard = db_clone.lock().unwrap();
+        });
+        println!("Processed: {}", trimmed);
+        writer.write_all(b"OK\n").await?;
     }
+
+    Ok(())
 }

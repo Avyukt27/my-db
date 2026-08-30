@@ -1,6 +1,6 @@
 use std::env;
 
-use my_db::db::DataBase;
+use my_db::db::Database;
 
 #[test]
 fn test_db_insert_and_read() {
@@ -8,7 +8,7 @@ fn test_db_insert_and_read() {
     path.push("test_insert.db");
     let _ = std::fs::remove_file(&path);
 
-    let mut db = DataBase::new(&path).unwrap();
+    let mut db = Database::new(&path).unwrap();
 
     db.set("username", "Alice").unwrap();
     db.set("password", "password123").unwrap();
@@ -28,11 +28,11 @@ fn test_database_persistence() {
     let _ = std::fs::remove_file(&path);
 
     {
-        let mut db = DataBase::new(&path).unwrap();
+        let mut db = Database::new(&path).unwrap();
         db.set("persisted_key", "hello world").unwrap();
     }
 
-    let db_reloaded = DataBase::new(&path).unwrap();
+    let db_reloaded = Database::new(&path).unwrap();
 
     assert_eq!(
         db_reloaded.get("persisted_key").unwrap().to_str(),
@@ -48,7 +48,7 @@ fn test_database_delete() {
     path.push("test_insert.db");
     let _ = std::fs::remove_file(&path);
 
-    let mut db = DataBase::new(&path).unwrap();
+    let mut db = Database::new(&path).unwrap();
 
     db.set("username", "Alice").unwrap();
     db.set("password", "password123").unwrap();
