@@ -1,6 +1,6 @@
 use std::env;
 
-use my_db::DataBase;
+use my_db::db::DataBase;
 
 #[test]
 fn test_db_insert_and_read() {
@@ -59,6 +59,6 @@ fn test_database_delete() {
 
     db.remove("username").unwrap();
 
-    assert_eq!(db.get("username").and_then(|v| Some(v.to_str())), None);
+    assert!(db.get("username").is_err());
     assert_eq!(db.get("password").unwrap().to_str(), "password123");
 }

@@ -15,7 +15,11 @@ pub struct DataBase {
 
 impl DataBase {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, DbError> {
-        let mut file = File::options().read(true).create(true).open(&path)?;
+        let mut file = File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&path)?;
         let data = Self::read_file_to_hashmap(&mut file)?;
         Ok(Self {
             path: path.as_ref().to_path_buf(),
@@ -23,8 +27,10 @@ impl DataBase {
         })
     }
 
-    pub fn get(&self, key: &str) -> Option<&DataType> {
-        self.data.get(key)
+    pub fn get(&self, key: &str) -> Result<&DataType, DbError> {
+        self.data
+            .get(key)
+            .ok_or_else(|| DbError::KeyNotFound(key.to_owned()))
     }
 
     pub fn set<T: Into<DataType>>(&mut self, key: &str, value: T) -> Result<(), DbError> {
