@@ -40,6 +40,13 @@ impl DataBase {
 
         Ok(())
     }
+
+    pub fn remove(&mut self, key: &str) -> io::Result<Option<DataType>> {
+        let new_line = format!("{}: __DELETED__\n", key);
+        let mut updated_file = File::options().append(true).open(&self.path)?;
+        updated_file.write_all(new_line.as_bytes())?;
+        Ok(self.data.remove(key))
+    }
 }
 
 fn read_file_to_hashmap(file: &mut File) -> io::Result<HashMap<String, DataType>> {
@@ -50,9 +57,13 @@ fn read_file_to_hashmap(file: &mut File) -> io::Result<HashMap<String, DataType>
     for line in lines {
         let line = line?;
         if let Some((k, v)) = line.split_once(": ") {
-            let key = k.to_owned();
-            let value = v.parse::<DataType>().unwrap();
-            data.insert(key, value);
+            if v == "__DELETED__" {
+                data.remove(&k.to_owned());
+            } else {
+                let key = k.to_owned();
+                let value = v.parse::<DataType>().unwrap();
+                data.insert(key, value);
+            }
         }
     }
 

@@ -41,3 +41,24 @@ fn test_database_persistence() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+#[test]
+fn test_database_delete() {
+    let mut path = env::temp_dir();
+    path.push("test_insert.db");
+    let _ = std::fs::remove_file(&path);
+
+    let mut db = DataBase::new(&path).unwrap();
+
+    db.set("username", "Alice").unwrap();
+    db.set("password", "password123").unwrap();
+    db.set("score", 10).unwrap();
+    db.set("ratio", 3.5).unwrap();
+
+    assert_eq!(db.get("username").unwrap().to_str(), "Alice");
+
+    db.remove("username").unwrap();
+
+    assert_eq!(db.get("username").and_then(|v| Some(v.to_str())), None);
+    assert_eq!(db.get("password").unwrap().to_str(), "password123");
+}
