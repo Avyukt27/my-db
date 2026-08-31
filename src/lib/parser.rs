@@ -8,28 +8,36 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
 
     match cmd.to_uppercase().as_str() {
         "SET" => {
-            let key = parts
-                .next()
-                .ok_or_else(|| DbError::ParseError("Missing key for SET".to_owned()))?;
-            let value = parts
-                .next()
-                .ok_or_else(|| DbError::ParseError("Missing value for SET".to_owned()))?;
+            let key = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing key for SET".to_owned()))?,
+            );
+            let value = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing value for SET".to_owned()))?,
+            );
             db.set(key, value)?;
             Ok("Ok".to_owned())
         }
         "GET" => {
-            let key = parts
-                .next()
-                .ok_or_else(|| DbError::ParseError("Missing key for GET".to_owned()))?;
+            let key = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing key for GET".to_owned()))?,
+            );
             let value = db.get(key)?;
             Ok(format!("{}", value.to_str()))
         }
         "DEL" => {
-            let key = parts
-                .next()
-                .ok_or_else(|| DbError::ParseError("Missing key for DEL".to_owned()))?;
+            let key = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing key for DEL".to_owned()))?,
+            );
             let value = db
-                .remove(key)?
+                .remove(&key)?
                 .ok_or_else(|| DbError::KeyNotFound(key.to_owned()))?;
             Ok(format!("{}", value.to_str()))
         }
@@ -39,4 +47,8 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
         }
         _ => Err(DbError::ParseError(command.to_owned())),
     }
+}
+
+fn sanitize_input(input: &str) -> String {
+    input.chars().filter(|c| !c.is_control()).collect()
 }

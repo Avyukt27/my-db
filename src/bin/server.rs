@@ -78,7 +78,7 @@ async fn handle_client(
         match result {
             Ok(s) => {
                 println!("Processed: {}", trimmed);
-                writer.write_all((s + "\n").as_bytes()).await?;
+                writer.write_all(format!("{}\n", s).as_bytes()).await?;
             }
             Err(e) => {
                 eprintln!("ERROR: {}", e);
