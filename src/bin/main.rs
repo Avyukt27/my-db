@@ -1,6 +1,6 @@
-use crate::server::Server;
-
 mod server;
+
+use crate::server::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

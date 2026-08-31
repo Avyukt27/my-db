@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use my_db::db::Database;
+use my_db::{db::Database, parser::parse_command};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream, ToSocketAddrs},
@@ -67,11 +67,26 @@ async fn handle_client(
         }
 
         let db_clone = Arc::clone(&db);
-        let response = tokio::task::spawn_blocking(move || {
+        let command = trimmed.to_owned();
+
+        let result = tokio::task::spawn_blocking(move || {
             let mut guard = db_clone.lock().unwrap();
-        });
-        println!("Processed: {}", trimmed);
-        writer.write_all(b"OK\n").await?;
+            parse_command(&mut guard, &command)
+        })
+        .await?;
+
+        match result {
+            Ok(s) => {
+                println!("Processed: {}", trimmed);
+                writer.write_all((s + "\n").as_bytes()).await?;
+            }
+            Err(e) => {
+                eprintln!("ERROR: {}", e);
+                writer
+                    .write_all(format!("ERROR: {}\n", e).as_bytes())
+                    .await?;
+            }
+        }
     }
 
     Ok(())
