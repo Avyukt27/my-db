@@ -37,7 +37,6 @@ impl Drop for TestDb {
 #[test]
 fn test_db_insert_and_read() {
     let db = TestDb::new("insert-and-read");
-
     assert_eq!(db.db.get("username").unwrap().to_str(), "Alice");
     assert_eq!(db.db.get("score").unwrap().to_str(), "10");
 }
