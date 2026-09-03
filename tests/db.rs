@@ -43,15 +43,18 @@ fn test_db_insert_and_read() {
 
 #[test]
 fn test_database_persistence() {
+    let mut path = std::env::temp_dir();
+    path.push("persistence");
+    let _ = std::fs::remove_file(&path);
+
     {
-        let mut db = TestDb::new("persistence");
-        db.db.set("persisted_key", "hello world").unwrap();
+        let mut db = Database::new(&path).unwrap();
+        db.set("persisted_key", "hello world").unwrap();
     }
 
-    let db_reloaded = TestDb::new("persistence");
-
+    let db_reloaded = Database::new(&path).unwrap();
     assert_eq!(
-        db_reloaded.db.get("persisted_key").unwrap().to_str(),
+        db_reloaded.get("persisted_key").unwrap().to_str(),
         "hello world"
     );
 }
