@@ -7,6 +7,15 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
         .ok_or_else(|| DbError::ParseError(command.to_owned()))?;
 
     match cmd.to_uppercase().as_str() {
+        "GET" => {
+            let key = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing key for GET".to_owned()))?,
+            );
+            let value = db.get(key)?;
+            Ok(format!("{}", value.to_str()))
+        }
         "SET" => {
             let key = sanitize_input(
                 parts
@@ -20,15 +29,6 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
             );
             db.set(key, value)?;
             Ok("Ok".to_owned())
-        }
-        "GET" => {
-            let key = sanitize_input(
-                parts
-                    .next()
-                    .ok_or_else(|| DbError::ParseError("Missing key for GET".to_owned()))?,
-            );
-            let value = db.get(key)?;
-            Ok(format!("{}", value.to_str()))
         }
         "DEL" => {
             let key = sanitize_input(
@@ -50,5 +50,6 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
 }
 
 fn sanitize_input(input: &str) -> String {
-    input.chars().filter(|c| !c.is_control()).collect()
+    let sanitized: String = input.chars().filter(|c| !c.is_control()).collect();
+    sanitized
 }
