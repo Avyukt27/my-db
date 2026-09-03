@@ -88,3 +88,22 @@ fn test_database_cmd_del() {
     let _ = parse_command(&mut db.db, "DEL username");
     assert!(parse_command(&mut db.db, "GET username").is_err());
 }
+
+#[test]
+fn test_database_cmd_keys() {
+    let mut db = TestDb::new("cmd-keys");
+    assert_eq!(
+        parse_command(&mut db.db, "KEYS").unwrap(),
+        "password, ratio, score, username"
+    );
+}
+
+#[test]
+fn test_database_cmd_exists() {
+    let mut db = TestDb::new("cmd-exists");
+    assert_eq!(
+        parse_command(&mut db.db, "EXISTS username").unwrap(),
+        "true"
+    );
+    assert_eq!(parse_command(&mut db.db, "EXISTS user_1").unwrap(), "false");
+}
