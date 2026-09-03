@@ -3,5 +3,15 @@ name = "my_db"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "my_db"
+path = "src/lib/lib.rs"
+crate-type = ["lib"]
+
+[[bin]]
+name = "server"
+path = "src/bin/main.rs"
+
 [dependencies]
 thiserror = "2.0.20"
+tokio = { version = "1.53.1", features = ["full"] }

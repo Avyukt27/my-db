@@ -8,12 +8,12 @@ use std::{
 use crate::{db_error::DbError, db_types::DataType};
 
 #[derive(Debug)]
-pub struct DataBase {
+pub struct Database {
     path: PathBuf,
     data: HashMap<String, DataType>,
 }
 
-impl DataBase {
+impl Database {
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self, DbError> {
         let mut file = File::options()
             .read(true)
@@ -27,14 +27,21 @@ impl DataBase {
         })
     }
 
-    pub fn get(&self, key: &str) -> Result<&DataType, DbError> {
+    pub fn get<K: AsRef<str>>(&self, key: K) -> Result<&DataType, DbError> {
+        let key = key.as_ref();
         self.data
             .get(key)
             .ok_or_else(|| DbError::KeyNotFound(key.to_owned()))
     }
 
-    pub fn set<T: Into<DataType>>(&mut self, key: &str, value: T) -> Result<(), DbError> {
+    pub fn set<K: AsRef<str>, V: Into<DataType>>(
+        &mut self,
+        key: K,
+        value: V,
+    ) -> Result<(), DbError> {
+        let key = key.as_ref();
         let value = value.into();
+
         let new_line = format!("{}: {}\n", key, value.to_str().into_owned());
         let mut updated_file = File::options().append(true).open(&self.path)?;
         updated_file.write_all(new_line.as_bytes())?;
@@ -43,7 +50,9 @@ impl DataBase {
         Ok(())
     }
 
-    pub fn remove(&mut self, key: &str) -> Result<Option<DataType>, DbError> {
+    pub fn remove<K: AsRef<str>>(&mut self, key: K) -> Result<Option<DataType>, DbError> {
+        let key = key.as_ref();
+
         let new_line = format!("{}: __DELETED__\n", key);
         let mut updated_file = File::options().append(true).open(&self.path)?;
         updated_file.write_all(new_line.as_bytes())?;
