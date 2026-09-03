@@ -13,5 +13,6 @@ name = "server"
 path = "src/bin/main.rs"
 
 [dependencies]
+rand = "0.10.2"
 thiserror = "2.0.20"
 tokio = { version = "1.53.1", features = ["full"] }
