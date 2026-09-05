@@ -1,4 +1,5 @@
 use std::{
+    net::SocketAddr,
     path::Path,
     sync::{Arc, Mutex},
 };
@@ -42,6 +43,10 @@ impl Server {
                     .unwrap_or_else(|e| eprintln!("Error handling client: {}", e));
             });
         }
+    }
+
+    pub fn addr(&self) -> SocketAddr {
+        self.listener.local_addr().unwrap()
     }
 }
 
