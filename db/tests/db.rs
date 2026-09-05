@@ -1,6 +1,6 @@
 use std::{env, path::PathBuf};
 
-use my_db::{db::Database, parser::parse_command};
+use db::{Database, parse_command};
 
 pub struct TestDb {
     pub db: Database,
