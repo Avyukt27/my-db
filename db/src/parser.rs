@@ -45,6 +45,15 @@ pub fn parse_command(db: &mut Database, command: &str) -> Result<String, DbError
             db.compact()?;
             Ok("Ok".to_owned())
         }
+        "KEYS" => Ok(db.keys().join(", ")),
+        "EXISTS" => {
+            let key = sanitize_input(
+                parts
+                    .next()
+                    .ok_or_else(|| DbError::ParseError("Missing key for EXISTS".to_owned()))?,
+            );
+            Ok(format!("{}", db.exists(key)))
+        }
         _ => Err(DbError::ParseError(command.to_owned())),
     }
 }

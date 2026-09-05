@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use my_db::{db::Database, parser::parse_command};
+use db::{Database, parse_command};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpListener, TcpStream, ToSocketAddrs},

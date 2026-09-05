@@ -73,6 +73,17 @@ impl Database {
         Ok(())
     }
 
+    pub fn keys(&self) -> Vec<&str> {
+        let mut keys: Vec<&str> = self.data.keys().map(|k| k.as_str()).collect();
+        keys.sort();
+        keys
+    }
+
+    pub fn exists<K: AsRef<str>>(&self, key: K) -> bool {
+        let key = key.as_ref();
+        self.data.get(key).is_some()
+    }
+
     fn read_file_to_hashmap(file: &mut File) -> Result<HashMap<String, DataType>, DbError> {
         file.seek(io::SeekFrom::Start(0))?;
         let lines = io::BufReader::new(file).lines();
